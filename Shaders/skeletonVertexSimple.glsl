@@ -12,7 +12,7 @@ in 	vec3 normal;
 in 	vec3 tangent;
 in  vec2 texCoord;
 
-layout(location = 4) in vec2 weighting;
+layout(location = 6) in vec2 weighting;
 
 //			target->weights[j].x = subMesh.verts[j].weightElements;
 //			target->weights[j].y = subMesh.verts[j].weightIndex;

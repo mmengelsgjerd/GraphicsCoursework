@@ -1,11 +1,12 @@
 # pragma once
 
 
-#include "../../nclgl/Matrix4.h"
-#include "../../nclgl/Vector3.h"
-#include "../../nclgl/Vector4.h"
-#include "../../nclgl/Mesh.h"
+#include "Matrix4.h"
+#include "Vector3.h"
+#include "Vector4.h"
+#include "Mesh.h"
 #include <vector>
+//#include "../../GraphicsCoursework/Renderer.h"
 
 
 class SceneNode {
@@ -27,7 +28,9 @@ public:
 	void SetMesh(Mesh* m) { mesh = m; }
 
 	void AddChild(SceneNode* s);
-	void SceneNode::RemoveChild();
+	//void SceneNode::RemoveChild();
+	void RemoveChild();
+
 
 	virtual void Update(float msec);
 
@@ -57,6 +60,7 @@ protected:
 	Vector3 modelScale;
 	Vector4 colour;
 	std::vector<SceneNode*> children;
+	//Renderer renderer;
 
 	//Tutorial 7
 	float distanceFromCamera;

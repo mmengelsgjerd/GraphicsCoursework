@@ -37,9 +37,10 @@ void	MD5Node::Update(float msec) {
 		}
 		//Transform this particular node's skeleton to the right frame of
 		//anim
-		if (currentAnimFrame == 1)
+		if (currentAnimFrame == 1 && currentSkeleton.joints[0].transform.values[12] < 0)
 		{
 			transform = transform + currentSkeleton.joints[0].transform;
+			cout << transform << endl;
 		}
 		currentAnim->TransformSkeleton(currentSkeleton,currentAnimFrame-1);
 	}

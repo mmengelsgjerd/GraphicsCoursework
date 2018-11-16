@@ -2,6 +2,7 @@
 #include "Renderer.h"
 
 Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
+
 	camera = new Camera();
 	heightMap = new HeightMap(TEXTUREDIR "terrain.raw");
 	quad = Mesh::GenerateQuad();
@@ -10,17 +11,30 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 
 	light = new Light(Vector3((RAW_HEIGHT * HEIGHTMAP_X / 2.0f), 500.0f, (RAW_HEIGHT * HEIGHTMAP_Z / 2.0f)), Vector4(0.9f, 0.9f, 1.0f, 1), (RAW_WIDTH * HEIGHTMAP_X) / 2.0f);
 
-	reflectShader = new Shader(SHADERDIR "PerPixelVertex.glsl",
-		SHADERDIR "ReflectFragment.glsl");
-	skyboxShader = new Shader(SHADERDIR "SkyboxVertex.glsl",
-		SHADERDIR "SkyboxFragment.glsl");
-	lightShader = new Shader(SHADERDIR "PerPixelVertex.glsl",
-		SHADERDIR "PerPixelFragment.glsl");
+	reflectShader = new Shader(SHADERDIR "PerPixelVertex.glsl", SHADERDIR "ReflectFragment.glsl");
+	skyboxShader = new Shader(SHADERDIR "SkyboxVertex.glsl", SHADERDIR "SkyboxFragment.glsl");
+	lightShader = new Shader(SHADERDIR "PerPixelVertex.glsl", SHADERDIR "PerPixelFragment.glsl");
 
-	if (!reflectShader->LinkProgram() || !lightShader->LinkProgram() || !skyboxShader->LinkProgram()) {
+#ifdef MD5_USE_HARDWARE_SKINNING
+	hellNodeShader = new Shader(SHADERDIR"skeletonVertexSimple.glsl", SHADERDIR"TexturedFragment.glsl");
+#else
+	hellNodeShader = new Shader(SHADERDIR"TexturedVertex.glsl", SHADERDIR"TexturedFragment.glsl");
+#endif
+
+	hellData = new MD5FileData(MESHDIR"hellknight.md5mesh");
+
+	hellNode = new MD5Node(*hellData);
+	hellNode->SetTransform(Matrix4::Translation(Vector3(RAW_WIDTH * HEIGHTMAP_X / 2.0f, 500.0f, RAW_WIDTH * HEIGHTMAP_X / 2.0f)));
+	
+
+	if (!hellNodeShader->LinkProgram() || !reflectShader->LinkProgram() || !lightShader->LinkProgram() || !skyboxShader->LinkProgram()) {
 		return;
-
 	}
+
+	hellData->AddAnim(MESHDIR"walk7.md5anim");
+	hellData->AddAnim(MESHDIR"attack2.md5anim");
+
+	hellNode->PlayAnim(MESHDIR"walk7.md5anim");
 
 	quad->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR "water.TGA", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
 
@@ -29,12 +43,20 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	heightMap->SetBumpMap(SOIL_load_OGL_texture(TEXTUREDIR "Barren RedsDOT3.JPG", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
 
 	cubeMap = SOIL_load_OGL_cubemap(
-		TEXTUREDIR "rusted_west.JPG", TEXTUREDIR "rusted_east.JPG",
-		TEXTUREDIR "rusted_up.JPG", TEXTUREDIR "rusted_down.JPG",
-		TEXTUREDIR "rusted_south.JPG", TEXTUREDIR "rusted_north.JPG",
+		TEXTUREDIR "hw_crater/craterlake_ft.tga", TEXTUREDIR "hw_crater/craterlake_bk.tga",
+		TEXTUREDIR "hw_crater/craterlake_up.tga", TEXTUREDIR "hw_crater/craterlake_dn.tga",
+		TEXTUREDIR "hw_crater/craterlake_rt.tga", TEXTUREDIR "hw_crater/craterlake_lf.tga",
 		SOIL_LOAD_RGB,
 		SOIL_CREATE_NEW_ID, 0
 	);
+
+	//cubeMap = SOIL_load_OGL_cubemap(
+	//	TEXTUREDIR "sb_frozen/ft.tga", TEXTUREDIR "sb_frozen/bk.tga",
+	//	TEXTUREDIR "sb_frozen/up.tga", TEXTUREDIR "sb_frozen/dn.tga",
+	//	TEXTUREDIR "sb_frozen/rt.tga", TEXTUREDIR "sb_frozen/lf.tga",
+	//	SOIL_LOAD_RGB,
+	//	SOIL_CREATE_NEW_ID, 0
+	//);
 
 	if (!cubeMap || !quad->GetTexture() || !heightMap->GetTexture() || !heightMap->GetBumpMap()) {
 		return;
@@ -43,6 +65,16 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	SetTextureRepeating(quad->GetTexture(), true);
 	SetTextureRepeating(heightMap->GetTexture(), true);
 	SetTextureRepeating(heightMap->GetBumpMap(), true);
+
+
+	//hellNode->PlayAnim(MESHDIR"attack2.md5anim");
+
+
+	//projMatrix = Matrix4::Perspective(1.0f, 10000.0f, (float)width / (float)height, 45.0f);
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_CULL_FACE);
+
 
 	init = true;
 	waterRotate = 0.0f;
@@ -54,6 +86,10 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);}Renderer ::~Renderer(void) {
 	delete camera;
+
+	delete hellData;
+	delete hellNode;
+
 	delete heightMap;
 	delete quad;
 	delete reflectShader;
@@ -63,15 +99,25 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	currentShader = 0;}void Renderer::UpdateScene(float msec) {
 	camera->UpdateCamera(msec);
 	viewMatrix = camera->BuildViewMatrix();
+	hellNode->Update(msec);
 	waterRotate += msec / 1000.0f;}void Renderer::RenderScene() {
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 	DrawSkybox();
 	DrawHeightmap();
 	DrawWater();
+	DrawHellNode();
 
 	SwapBuffers();
-}void Renderer::DrawSkybox() {
+}void Renderer::DrawHellNode(){	//glUseProgram(currentShader->GetProgram());
+	SetCurrentShader(hellNodeShader);
+	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
+	modelMatrix = hellNode->GetTransform();
+	//modelMatrix.SetPositionVector(modelMatrix.GetPositionVector() + hellNode->GetTransform().GetPositionVector());
+	UpdateShaderMatrices();
+	hellNode->Draw(*this);
+
+	glUseProgram(0);}void Renderer::DrawSkybox() {
 	glDepthMask(GL_FALSE);
 	SetCurrentShader(skyboxShader);
 
