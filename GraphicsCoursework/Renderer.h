@@ -8,6 +8,8 @@
 #include "../nclgl/MD5Mesh.h"
 #include "../nclgl/MD5Node.h"
 
+#define SHADOWSIZE 2048 // New !
+
 class Renderer : public OGLRenderer {
 public:
 	Renderer(Window& parent);
@@ -21,11 +23,18 @@ protected:
 	void DrawWater();
 	void DrawSkybox();
 	void DrawHellNode();
+	void DrawShadowScene();
+	void DrawCombinedScene();
 
 	Shader* lightShader;
 	Shader* reflectShader;
 	Shader* skyboxShader;
 	Shader* hellNodeShader;
+	Shader* sceneShader;
+	Shader* shadowShader;
+
+	GLuint shadowTex;
+	GLuint shadowFBO;
 
 	MD5FileData* hellData;
 	MD5Node*	hellNode;
@@ -38,4 +47,5 @@ protected:
 
 	GLuint cubeMap;
 
-	float waterRotate;};
+	float waterRotate;
+};

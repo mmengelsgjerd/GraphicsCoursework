@@ -34,10 +34,10 @@ void SceneNode::Draw(const OGLRenderer& r) {
 
 void SceneNode::Update(float msec) {
 	if (parent) { // This node has a parent ...
-		worldTransform = parent->worldTransform * transform;
+		worldTransform = parent->worldTransform * (transform * Matrix4::Scale(modelScale));
 	}
 	else { // Root node , world transform is local transform !
-		worldTransform = transform;
+		worldTransform = transform * Matrix4::Scale(modelScale);
 	}
 	for (vector <SceneNode*>::iterator i = children.begin(); i != children.end(); ++i) {
 		(*i)->Update(msec);

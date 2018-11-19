@@ -52,7 +52,6 @@ public:
 	*/
 	void	PlayAnim(std::string name);	
 
-
 	bool	GetParentLocalOrientation(const string&name, Quaternion &t);
 	bool	GetParentWorldOrientation(const string&name, Quaternion &t);
 
