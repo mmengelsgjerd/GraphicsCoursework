@@ -5,6 +5,7 @@ uniform mat4 viewMatrix;
 uniform mat4 projMatrix;
 uniform mat4 textureMatrix;
 uniform mat4 shadowMatrix;
+uniform mat4 nodeColour;
 
 uniform samplerBuffer weightTex;
 uniform samplerBuffer transformTex;
@@ -59,7 +60,7 @@ void main(void) {
 
 	OUT.worldPos = (modelMatrix * vec4(position, 1)).xyz;
 	// New !
-	OUT.shadowProj = (shadowMatrix * vec4(position +(normal * 1.5), 1));
+	OUT.shadowProj = (shadowMatrix * vec4(position +(normal * 50.5), 1));
 
 	gl_Position = (projMatrix * viewMatrix * modelMatrix) * vec4(position, 1.0);
 }

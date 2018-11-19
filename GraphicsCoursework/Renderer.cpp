@@ -5,9 +5,30 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 
 	camera = new Camera();
 	//light = new Light(Vector3(RAW_WIDTH * HEIGHTMAP_X / 2.0f, 200.0f, RAW_WIDTH * HEIGHTMAP_X / 2.0f), Vector4(1, 1, 1, 1), 5500.0f);
-	light = new Light(Vector3(0, 2000.0f, 0), Vector4(1, 1, 1, 1), 55000.0f);
+	light = new Light(Vector3(-2000, 5000.0f, 0), Vector4(1, 1, 1, 1), 55000.0f);
 	
 	quad = Mesh::GenerateQuad();
+
+	sphere = new OBJMesh();
+
+	if(!sphere->LoadOBJMesh(SUNDIR "sphere.obj")) return;
+	sphere->SetTexture(SOIL_load_OGL_texture("../Assets/sol/2k_sun.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
+	
+	root = new SceneNode();
+	//root->SetMesh(sphere);
+	//root->SetTransform(Matrix4::Translation(Vector3(RAW_WIDTH * HEIGHTMAP_X / 2.0f, 0.0f, RAW_WIDTH * HEIGHTMAP_X / 2.0f)));
+	//root->SetModelScale(Vector3(0.01f, 0.01f, 0.01f));
+	//root->SetBoundingRadius(10000.0f);
+	
+	sun = new SceneNode(sphere);
+	sun->SetMesh(sphere);
+	sun->SetTransform(Matrix4::Translation(Vector3(-10000.0f, 10000.0f, 0.0f)));
+	sun->SetModelScale(Vector3(50.0f, 50.0f, 50.0f));
+	sun->SetBoundingRadius(10000.0f);
+	
+	root->AddChild(sun);
+
+	//BuildNodeLists(root);
 
 	camera->SetPosition(Vector3(RAW_WIDTH * HEIGHTMAP_X / 2.0f, 550.0f, RAW_WIDTH * HEIGHTMAP_X / 2.0f));
 
@@ -15,12 +36,12 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	hellData = new MD5FileData(MESHDIR"hellknight.md5mesh");
 	hellNode = new MD5Node(*hellData);
 	hellNode->SetTransform(Matrix4::Translation(Vector3((RAW_WIDTH * HEIGHTMAP_X / 2.0f), 350.0f, (RAW_WIDTH * HEIGHTMAP_X / 2.0f))));
-	hellNode->SetModelScale(Vector3(15.0f, 5.0f, 5.0f));
+	hellNode->SetModelScale(Vector3(3.0f, 3.0f, 3.0f));
 
 	//light = new Light((RAW_WIDTH * HEIGHTMAP_X / 2.0f), 0.0f, (RAW_WIDTH * HEIGHTMAP_X / 2.0f)-2000.0f)
 	//light->SetPosition(Vector3(light->GetPosition().x, 500.0f, light->GetPosition().z));
 	//light = new Light(Vector3(-450.0f, 200.0f, 280.0f), Vector4(1, 1, 1, 1), 5500.0f);
-
+	nodeShader = new Shader(SHADERDIR "SceneVertex.glsl", SHADERDIR "SceneFragment.glsl");
 	reflectShader = new Shader(SHADERDIR "PerPixelVertex.glsl", SHADERDIR "ReflectFragment.glsl");
 	skyboxShader = new Shader(SHADERDIR "SkyboxVertex.glsl", SHADERDIR "SkyboxFragment.glsl");
 	lightShader = new Shader(SHADERDIR "PerPixelVertex.glsl", SHADERDIR "PerPixelFragment.glsl");
@@ -38,7 +59,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 		SHADERDIR "ShadowFragment.glsl");
 	
 
-	if (!sceneShader->LinkProgram() || !shadowShader->LinkProgram() || !reflectShader->LinkProgram() || !lightShader->LinkProgram() || !skyboxShader->LinkProgram() || !hellNodeShader->LinkProgram()) {
+	if (!nodeShader->LinkProgram() || !sceneShader->LinkProgram() || !shadowShader->LinkProgram() || !reflectShader->LinkProgram() || !lightShader->LinkProgram() || !skyboxShader->LinkProgram() || !hellNodeShader->LinkProgram()) {
 		return;
 	}
 
@@ -60,11 +81,19 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 		SOIL_LOAD_RGB,
 		SOIL_CREATE_NEW_ID, 0
 	);*/
-
+	/*
 	cubeMap = SOIL_load_OGL_cubemap(
 		TEXTUREDIR "sb_frozen/ft.tga", TEXTUREDIR "sb_frozen/bk.tga",
 		TEXTUREDIR "sb_frozen/up.tga", TEXTUREDIR "sb_frozen/dn.tga",
 		TEXTUREDIR "sb_frozen/rt.tga", TEXTUREDIR "sb_frozen/lf.tga",
+		SOIL_LOAD_RGB,
+		SOIL_CREATE_NEW_ID, 0
+	);*/
+
+	cubeMap = SOIL_load_OGL_cubemap(
+		TEXTUREDIR "mp_ayden/ayden_ft.tga", TEXTUREDIR "mp_ayden/ayden_bk.tga",
+		TEXTUREDIR "mp_ayden/ayden_up.tga", TEXTUREDIR "mp_ayden/ayden_dn.tga",
+		TEXTUREDIR "mp_ayden/ayden_rt.tga", TEXTUREDIR "mp_ayden/ayden_lf.tga",
 		SOIL_LOAD_RGB,
 		SOIL_CREATE_NEW_ID, 0
 	);
@@ -94,7 +123,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	glDrawBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	heightMap = new HeightMap(TEXTUREDIR "terrain4.raw");
+	heightMap = new HeightMap(TEXTUREDIR "terrain5.raw");
 	heightMap->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR "Barren Reds.JPG", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
 	heightMap->SetBumpMap(SOIL_load_OGL_texture(TEXTUREDIR "Barren RedsDOT3.JPG", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
 
@@ -111,7 +140,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	init = true;
 	waterRotate = 0.0f;
 
-	projMatrix = Matrix4::Perspective(1.0f, 15000.0f, (float)width / (float)height, 45.0f);
+	projMatrix = Matrix4::Perspective(1.0f, 150000000.0f, (float)width / (float)height, 45.0f);
 
 	//glEnable(GL_BLEND);
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -135,6 +164,12 @@ Renderer ::~Renderer(void) {
 	delete sceneShader;
 	delete shadowShader;
 	delete light;
+
+	delete sphere;
+	delete root;
+	delete nodeShader;
+	
+
 	currentShader = NULL;
 }
 
@@ -142,7 +177,16 @@ void Renderer::UpdateScene(float msec) {
 	if (Window::GetKeyboard()->KeyDown(KEYBOARD_UP))
 	{
 		Matrix4 newPosition = hellNode->GetTransform();
-		newPosition.values[12] += -1.0f;
+		newPosition.values[12] += -5.0f;
+
+		hellNode->SetTransform(newPosition);
+		UpdateShaderMatrices();
+		hellNode->PlayAnim(MESHDIR"walk7.md5anim");
+	}
+	if (Window::GetKeyboard()->KeyDown(KEYBOARD_DOWN))
+	{
+		Matrix4 newPosition = hellNode->GetTransform();
+		newPosition.values[12] += 5.0f;
 
 		hellNode->SetTransform(newPosition);
 		UpdateShaderMatrices();
@@ -150,58 +194,109 @@ void Renderer::UpdateScene(float msec) {
 	}
 	if (Window::GetKeyboard()->KeyDown(KEYBOARD_LEFT))
 	{
-		Matrix4 newPosition = hellNode->GetTransform();
-		newPosition.values[14] += 1.0f;
+		Matrix4 newRotation = Matrix4::Rotation(10.0f, Vector3(0.0f, 1.0f, 0.0f));
+		Matrix4 temp = hellNode->GetTransform() * Matrix4::Rotation(10.0f, Vector3(0.0f, 1.0f, 0.0f));;
 
-		hellNode->SetTransform(newPosition);
+		hellNode->SetTransform(temp);
 		UpdateShaderMatrices();
-		hellNode->PlayAnim("walk7.md5anim");
+		hellNode->PlayAnim(MESHDIR"walk7.md5anim");
 	}
 	if (Window::GetKeyboard()->KeyDown(KEYBOARD_RIGHT))
 	{
-		Matrix4 newPosition = hellNode->GetTransform();
-		newPosition.values[14] -= 1.0f;
-
-		hellNode->SetTransform(newPosition);
+		Matrix4 newRotation = Matrix4::Rotation(10.0f, Vector3(0.0f, 1.0f, 0.0f));
+		Matrix4 temp = hellNode->GetTransform() * Matrix4::Rotation(-10.0f, Vector3(0.0f, 1.0f, 0.0f));;
+		hellNode->SetTransform(temp);
 		UpdateShaderMatrices();
-		hellNode->PlayAnim("walk7.md5anim");
+		hellNode->PlayAnim(MESHDIR"walk7.md5anim");
 	}
-	if (Window::GetKeyboard()->KeyDown(KEYBOARD_DOWN))
-	{
-		Matrix4 newPosition = hellNode->GetTransform();
-		newPosition.values[12] += 1.0f;
-
-		hellNode->SetTransform(newPosition);
-		UpdateShaderMatrices();
-		hellNode->PlayAnim("walk7.md5anim");
-	}
-	//hellNode->PlayAnim(MESHDIR"idle2.md5anim");
+	
 	camera->UpdateCamera(msec);
-	//viewMatrix = camera->BuildViewMatrix();
+	viewMatrix = camera->BuildViewMatrix();
 	hellNode->Update(msec);
-	//cout << hellNode->GetModelScale() << endl;
+	frameFrustum.FromMatrix(projMatrix * viewMatrix);
+	
+	sun->SetTransform(root->GetWorldTransform() * Matrix4::Rotation(msec/100.0f, Vector3(0, 1, 0)) * sun->GetTransform());
+	light = new Light(Vector3(sun->GetWorldTransform().GetPositionVector().x, 4000.0f, sun->GetWorldTransform().GetPositionVector().z), Vector4(1, 1, 1, 1), 55000.0f);
+
+	root->Update(msec);
+
 	waterRotate += msec / 1000.0f;
 }
 
 void Renderer::RenderScene() {
+	BuildNodeLists(root);
+	SortNodeLists();
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-	
-	//DrawHeightmap();
-	//DrawWater();
-	//DrawHellNode();
 	DrawSkybox();
-	//DrawHeightmap();
-	//DrawHellNode();
+	SetCurrentShader(nodeShader);
+	UpdateShaderMatrices();
+	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
+	glDepthMask(GL_FALSE);
+	//glCullFace(GL_FRONT);
+	DrawNodes();
+	glDepthMask(GL_TRUE);
+
+
 	DrawShadowScene();
 	DrawCombinedScene();
 
+
 	SwapBuffers();
+	ClearNodeLists();
 
 }
 
-void Renderer::DrawShadowScene() {
+void Renderer::ClearNodeLists() {
+	//transparentNodeList.clear();
+	nodeList.clear();
+}
 
+void Renderer::BuildNodeLists(SceneNode* from) {
+	if (frameFrustum.InsideFrustum(*from)) {
+		Vector3 dir = from->GetWorldTransform().GetPositionVector() -
+			camera->GetPosition();
+		from->SetCameraDistance(Vector3::Dot(dir, dir));
+
+		/*if (from->GetColour().w < 1.0f) {
+			transparentNodeList.push_back(from);
+		}
+		else {*/
+			nodeList.push_back(from);
+		//}
+	}
+
+	for (vector<SceneNode*>::const_iterator i = from->GetChildIteratorStart(); i != from->GetChildIteratorEnd(); ++i) {
+		BuildNodeLists((*i));
+	}
+
+}
+
+void Renderer::SortNodeLists() {
+	//std::sort(transparentNodeList.begin(), transparentNodeList.end(), SceneNode::CompareByCameraDistance);
+	std::sort(nodeList.begin(), nodeList.end(), SceneNode::CompareByCameraDistance);
+}
+
+void Renderer::DrawNodes() {
+	
+	for (vector<SceneNode*>::const_iterator i = nodeList.begin(); i != nodeList.end(); ++i) {
+		DrawNode((*i));
+	}
+	/*for (vector<SceneNode*>::const_reverse_iterator i = transparentNodeList.rbegin(); i != transparentNodeList.rend(); ++i) {
+		DrawNode((*i));
+	}*/
+}
+
+void Renderer::DrawNode(SceneNode* n) {
+	if (n->GetMesh()) {
+		glUniformMatrix4fv(glGetUniformLocation(currentShader->GetProgram(), "modelMatrix"), 1, false, (float*)&(n->GetWorldTransform()* Matrix4::Scale(n->GetModelScale())));
+		glUniform4fv(glGetUniformLocation(currentShader->GetProgram(), "nodeColour"), 1, (float*)& n->GetColour());
+		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "useTexture"), (int)n->GetMesh()->GetTexture());
+		n->Draw(*this);
+	}
+}
+
+void Renderer::DrawShadowScene() {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, shadowFBO);
 
@@ -218,13 +313,12 @@ void Renderer::DrawShadowScene() {
 
 	UpdateShaderMatrices();
 
-	//DrawSkybox();
 	DrawHeightmap();
 	SetCurrentShader(sceneShader);
 	DrawHellNode();
 	DrawWater();
 	SetCurrentShader(sceneShader);
-	//DrawMesh();
+
 
 	glUseProgram(0);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -250,13 +344,11 @@ void Renderer::DrawCombinedScene() {
 	viewMatrix = camera->BuildViewMatrix();
 	UpdateShaderMatrices();
 
-	
 	DrawHellNode();
 	SetCurrentShader(sceneShader);
 	DrawHeightmap();
 	DrawWater();
 	SetCurrentShader(sceneShader);
-	//DrawMesh();
 
 	glUseProgram(0);
 
@@ -266,7 +358,7 @@ void Renderer::DrawHellNode()
 {
 	SetCurrentShader(hellNodeShader);
 	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
-	modelMatrix = hellNode->GetTransform();
+	modelMatrix = hellNode->GetWorldTransform();
 	UpdateShaderMatrices();
 	hellNode->Draw(*this);
 
@@ -291,14 +383,6 @@ void Renderer::DrawSkybox() {
 }
 
 void Renderer::DrawHeightmap() {
-	//SetShaderLight(*light);
-
-	//glUniform3fv(glGetUniformLocation(currentShader->GetProgram(), "cameraPos"), 1, (float*)& camera->GetPosition());
-
-	//glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
-
-	//glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "bumpTex"), 1);
-
 	modelMatrix = Matrix4::Rotation(90, Vector3(1, 0, 0)) * Matrix4::Scale(Vector3(450, 450, 1));
 	Matrix4 tempMatrix = shadowMatrix * modelMatrix;
 

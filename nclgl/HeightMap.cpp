@@ -23,7 +23,7 @@ HeightMap::HeightMap(std::string name) {
 			
 
 			vertices[offset] = Vector3(x * HEIGHTMAP_X, data[offset] * HEIGHTMAP_Y, z * HEIGHTMAP_Z);
-			if (data[offset] * HEIGHTMAP_Y == 0)
+			if (data[offset] * HEIGHTMAP_Y < 5)
 			{
 				vertices[offset].y = 350;
 			}

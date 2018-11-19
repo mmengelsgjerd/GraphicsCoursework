@@ -7,6 +7,9 @@
 #include "../nclgl/SceneNode.h"
 #include "../nclgl/MD5Mesh.h"
 #include "../nclgl/MD5Node.h"
+#include "../nclgl/OBJMesh.h"
+#include "../nclgl/Frustrum.h"
+#include <algorithm>
 
 #define SHADOWSIZE 2048 // New !
 
@@ -19,6 +22,12 @@ public:
 	virtual void UpdateScene(float msec);
 
 protected:
+	void BuildNodeLists(SceneNode * from);
+	void SortNodeLists();
+	void DrawNode(SceneNode * n);
+	void DrawNodes();
+	void ClearNodeLists();
+
 	void DrawHeightmap();
 	void DrawWater();
 	void DrawSkybox();
@@ -32,6 +41,13 @@ protected:
 	Shader* hellNodeShader;
 	Shader* sceneShader;
 	Shader* shadowShader;
+	Shader* nodeShader;
+
+
+
+	OBJMesh* sphere;
+	SceneNode* root;
+	SceneNode* sun;
 
 	GLuint shadowTex;
 	GLuint shadowFBO;
@@ -42,10 +58,15 @@ protected:
 	HeightMap* heightMap;
 	Mesh* quad;
 
+	Frustum frameFrustum;
+	vector<SceneNode*> nodeList;
+
 	Light* light;
 	Camera* camera;
 
 	GLuint cubeMap;
 
 	float waterRotate;
+
+
 };
