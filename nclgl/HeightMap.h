@@ -17,6 +17,6 @@
 
 class HeightMap : public Mesh {
  public:
-	HeightMap(std::string name);
+	HeightMap(std::string name, int sceneNumber);
 	~HeightMap(void) {};
 };

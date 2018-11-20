@@ -12,6 +12,7 @@
 #include <algorithm>
 
 #define SHADOWSIZE 2048 // New !
+#define LIGHTNUM 8 // We ’ll generate LIGHTNUM squared lights ...
 
 class Renderer : public OGLRenderer {
 public:
@@ -34,6 +35,7 @@ protected:
 	void DrawHellNode();
 	void DrawShadowScene();
 	void DrawCombinedScene();
+	void DrawFloor();
 
 	Shader* lightShader;
 	Shader* reflectShader;
@@ -43,10 +45,36 @@ protected:
 	Shader* shadowShader;
 	Shader* nodeShader;
 
+	void FillBuffers(); //G- Buffer Fill Render Pass
+	void DrawPointLights(); // Lighting Render Pass
+	void CombineBuffers(); // Combination Render Pass
+	// Make a new texture ...
+	void GenerateScreenTexture(GLuint & into, bool depth = false);
+
+	Shader* sceneShader2; // Shader to fill our GBuffers
+	Shader* pointlightShader; // Shader to calculate lighting
+	Shader* combineShader; // shader to stick it all together
+
+	Light* pointLights; // Array of lighting data
+	OBJMesh* sphere2; // Light volume
+
+	float rotation; // How much to increase rotation by
+
+	GLuint bufferFBO; // FBO for our G- Buffer pass
+	GLuint bufferColourTex; // Albedo goes here
+	GLuint bufferNormalTex; // Normals go here
+	GLuint bufferDepthTex; // Depth goes here
+
+	GLuint pointLightFBO; // FBO for our lighting pass
+	GLuint lightEmissiveTex; // Store emissive lighting
+	GLuint lightSpecularTex; // Store specular lighting
+
 
 
 	OBJMesh* sphere;
+	OBJMesh* ico;
 	SceneNode* root;
+	SceneNode* root2;
 	SceneNode* sun;
 
 	GLuint shadowTex;
@@ -57,6 +85,8 @@ protected:
 
 	HeightMap* heightMap;
 	Mesh* quad;
+	Mesh* quad2;
+	Mesh* floor;
 
 	Frustum frameFrustum;
 	vector<SceneNode*> nodeList;
@@ -67,6 +97,11 @@ protected:
 	GLuint cubeMap;
 
 	float waterRotate;
+
+	int sceneNumber = 0;
+	bool justChangedScene = false;
+	vector<GLuint> cubeMaps;
+	vector<HeightMap*> heightMaps;
 
 
 };

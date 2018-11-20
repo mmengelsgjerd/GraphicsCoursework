@@ -10,6 +10,8 @@ class Light {
 		this->colour = colour;
 		this->radius = radius;
 	}
+
+	Light() {};
 	
 	~Light(void) {};
 	

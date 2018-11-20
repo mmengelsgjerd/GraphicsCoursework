@@ -2,7 +2,7 @@
 
 
 
-HeightMap::HeightMap(std::string name) {
+HeightMap::HeightMap(std::string name, int sceneNumber) {
 	std::ifstream file(name.c_str(), ios::binary);
 	if (!file) {
 		return;
@@ -23,7 +23,7 @@ HeightMap::HeightMap(std::string name) {
 			
 
 			vertices[offset] = Vector3(x * HEIGHTMAP_X, data[offset] * HEIGHTMAP_Y, z * HEIGHTMAP_Z);
-			if (data[offset] * HEIGHTMAP_Y < 5)
+			if (data[offset] * HEIGHTMAP_Y < 5 && sceneNumber == 0)
 			{
 				vertices[offset].y = 350;
 			}
