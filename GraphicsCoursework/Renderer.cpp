@@ -586,9 +586,9 @@ void Renderer::UpdateScene(float msec) {
 		}
 		else {
 			RenderSceneThree();
-			camera->SetPosition(Vector3(-556.0f, 1751.0f, -32.76f));
-			camera->SetYaw(224.5f);
-			camera->SetPitch(-32.7f);
+			camera->SetPosition(Vector3(-1640.0f, 707.0f, -1915.76f));
+			camera->SetYaw(222.5f);
+			camera->SetPitch(-23.7f);
 		}
 	}
 
@@ -609,10 +609,10 @@ void Renderer::UpdateScene(float msec) {
 			RenderSceneTwo();
 		}
 		else {
+			camera->SetPosition(Vector3(-1640.0f, 707.0f, -1915.76f));
+			camera->SetYaw(222.5f);
+			camera->SetPitch(-23.7f);
 			RenderSceneThree();
-			camera->SetPosition(Vector3(-556.0f, 1751.0f, -32.76f));
-			camera->SetYaw(224.5f);
-			camera->SetPitch(-32.7f);
 		}
 	}
 
@@ -711,18 +711,28 @@ void Renderer::RenderScene() {
 	else {
 		//BuildNodeLists(root3);
 		//SortNodeLists();
+		//if (camera)
+		float distance = CalculateDistanceBetween(camera->GetPosition(), Vector3((RAW_WIDTH * HEIGHTMAP_X / 2.0f), 0.0f, (RAW_WIDTH * HEIGHTMAP_X / 2.0f)));
+		//cout << "distance: " << distance << endl;
 
-		glDepthMask(GL_FALSE);
-		DrawSkybox();
-		DrawWater();
-		glDepthMask(GL_TRUE);
-		
+		if (distance > 3900.0f)
+		{
+			glDepthMask(GL_FALSE);
+			DrawSkybox();
+			DrawWater();
+			glDepthMask(GL_TRUE);
 
-		
+			DrawScene();
+			DrawPostProcess();
+			PresentScene();
 
-		DrawScene();
-		DrawPostProcess();
-		PresentScene();
+		}
+		else
+		{
+			DrawSkybox();
+			DrawShadowScene();
+			DrawCombinedScene();
+		}
 		//projMatrix = Matrix4::Perspective(1.0f, 150000000.0f, (float)width / (float)height, 45.0f);
 		//UpdateShaderMatrices();
 		//ClearNodeLists();
@@ -730,6 +740,16 @@ void Renderer::RenderScene() {
 	SwapBuffers();
 
 
+}
+
+float Renderer::CalculateDistanceBetween(Vector3 a, Vector3 b)
+{
+	Vector3 distance = a - b;
+	distance.x = distance.x * distance.x;
+	distance.y = distance.y * distance.y;
+	distance.z = distance.z * distance.z;
+	
+	return sqrt(distance.x + distance.y + distance.z);
 }
 
 void Renderer::ClearNodeLists() {
@@ -1104,12 +1124,12 @@ void Renderer::DrawScene() {
 	projMatrix = Matrix4::Perspective(1.0f, 150000000.0f, (float)width / (float)height, 45.0f);
 	UpdateShaderMatrices();
 	SetCurrentShader(sceneShader3);
-
+	glDepthMask(GL_FALSE);
 	DrawSkybox();
-
 	DrawWater();
 	SetCurrentShader(sceneShader3);
 	DrawHeightmap();
+	
 
 	glUseProgram(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

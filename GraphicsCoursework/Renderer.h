@@ -43,6 +43,7 @@ protected:
 	void PresentScene();
 	void DrawPostProcess();
 	void DrawScene();
+	float CalculateDistanceBetween(Vector3 a, Vector3 b);
 
 	Shader* lightShader;
 	Shader* reflectShader;
