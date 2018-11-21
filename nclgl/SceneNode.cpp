@@ -18,6 +18,14 @@ SceneNode ::~SceneNode(void) {
 	}
 }
 
+void SceneNode::ClearChildren()
+{
+	for (unsigned int i = 0; i < children.size(); ++i) {
+		delete children[i];
+	}
+	children.clear();
+}
+
 void SceneNode::AddChild(SceneNode* s) {
 	children.push_back(s);
 	s->parent = this;

@@ -30,6 +30,7 @@ public:
 	void AddChild(SceneNode* s);
 	//void SceneNode::RemoveChild();
 	void RemoveChild();
+	void ClearChildren();
 
 
 	virtual void Update(float msec);

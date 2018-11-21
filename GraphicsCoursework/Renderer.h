@@ -35,7 +35,7 @@ protected:
 	void DrawHellNode();
 	void DrawShadowScene();
 	void DrawCombinedScene();
-	void DrawFloor();
+	void ChangeAmountOfLights();
 
 	Shader* lightShader;
 	Shader* reflectShader;
@@ -100,6 +100,7 @@ protected:
 
 	int sceneNumber = 0;
 	bool justChangedScene = false;
+	float sphereFactor = 0.0f;
 	vector<GLuint> cubeMaps;
 	vector<HeightMap*> heightMaps;
 

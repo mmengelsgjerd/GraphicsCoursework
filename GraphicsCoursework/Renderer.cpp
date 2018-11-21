@@ -33,7 +33,11 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 
 	//BuildNodeLists(root);
 
-	camera->SetPosition(Vector3(RAW_WIDTH * HEIGHTMAP_X / 2.0f, 550.0f, RAW_WIDTH * HEIGHTMAP_X / 2.0f));
+	//camera->SetPosition(Vector3(RAW_WIDTH * HEIGHTMAP_X / 2.0f, 550.0f, RAW_WIDTH * HEIGHTMAP_X / 2.0f));
+	//Camera for first scene.
+	camera->SetPosition(Vector3(832.5f, 1349.0f, 3440.0f));
+	camera->SetYaw(318.5f);
+	camera->SetPitch(-24.2f);
 
 
 	hellData = new MD5FileData(MESHDIR"hellknight.md5mesh");
@@ -103,6 +107,16 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 
 	cubeMaps.push_back(cubeMap);
 
+	cubeMap = SOIL_load_OGL_cubemap(
+		TEXTUREDIR "sor_sea/sea_ft.jpg", TEXTUREDIR "sor_sea/sea_bk.jpg",
+		TEXTUREDIR "sor_sea/sea_up.jpg", TEXTUREDIR "sor_sea/sea_dn.jpg",
+		TEXTUREDIR "sor_sea/sea_rt.jpg", TEXTUREDIR "sor_sea/sea_lf.jpg",
+		SOIL_LOAD_RGB,
+		SOIL_CREATE_NEW_ID, 0
+	);
+
+	cubeMaps.push_back(cubeMap);
+
 	
 
 	//glEnable(GL_DEPTH_TEST);
@@ -142,8 +156,20 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	SetTextureRepeating(heightMap->GetTexture(), true);
 	SetTextureRepeating(heightMap->GetBumpMap(), true);
 	heightMaps.push_back(heightMap);
+
+	//Scene 2 heightMap.
+	heightMap = new HeightMap(TEXTUREDIR "terrain8.raw", 2);
+	heightMap->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR "grass2.JPG", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
+	heightMap->SetBumpMap(SOIL_load_OGL_texture(TEXTUREDIR "bumpMap3.JPG", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
+	SetTextureRepeating(heightMap->GetTexture(), true);
+	SetTextureRepeating(heightMap->GetBumpMap(), true);
+	heightMaps.push_back(heightMap);
 	
-	if (!cubeMaps[0] || !cubeMaps[1] || !quad->GetTexture() || !heightMaps[0]->GetTexture() || !heightMaps[0]->GetBumpMap() || !heightMaps[1]->GetTexture() || !heightMaps[1]->GetBumpMap()) {
+	if (!cubeMaps[0] || !cubeMaps[1] || !quad->GetTexture() ||
+		!heightMaps[0]->GetTexture() || !heightMaps[0]->GetBumpMap() ||
+		!heightMaps[1]->GetTexture() || !heightMaps[1]->GetBumpMap() || 
+		!heightMaps[2]->GetTexture() || !heightMaps[2]->GetBumpMap()) 
+	{
 		return;
 	}
 
@@ -156,39 +182,10 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	//ico->SetBumpMap(SOIL_load_OGL_texture(TEXTUREDIR "Barren RedsDOT3.JPG", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
 	SetTextureRepeating(ico->GetTexture(), true);
 	//SetTextureRepeating(ico->GetBumpMap(), true);
-	for (int x = 0; x < 7; x++)
-	{
-		for (int z = 0; z < 7; z++)
-		{
-			SceneNode* ico2 = new SceneNode(ico);
-			ico2->SetModelScale(Vector3(15.0f, 15.0f, 15.0f));
-			ico2->SetBoundingRadius(100000.0f);
-			ico2->SetTransform(Matrix4::Translation(Vector3(500.0f * (x+1), 150.0f, 500.0f * (z+1))));
-			root2->AddChild(ico2);
-		}
-	}
+
 
 	// Need to make an empty constructor for the Light class ...
-	pointLights = new Light[LIGHTNUM * LIGHTNUM];
-	for (int x = 0; x < LIGHTNUM; ++x) {
-		for (int z = 0; z < LIGHTNUM; ++z) {
-			Light & l = pointLights[(x * LIGHTNUM) + z];
-
-			float xPos = (RAW_WIDTH * HEIGHTMAP_X / (LIGHTNUM - 1)) * x;
-			float zPos = (RAW_HEIGHT * HEIGHTMAP_Z / (LIGHTNUM - 1)) * z;
-			l.SetPosition(Vector3(xPos, 100.0f, zPos));
-
-			float r = 0.5f + (float)(rand() % 129) / 128.0f;
-			float g = 0.5f + (float)(rand() % 129) / 128.0f;
-			float b = 0.5f + (float)(rand() % 129) / 128.0f;
-			l.SetColour(Vector4(r, g, b, 1.0f));
-
-			float radius = (RAW_WIDTH * HEIGHTMAP_X / LIGHTNUM);
-			l.SetRadius(radius);
-
-		}
-
-	}
+	ChangeAmountOfLights();
 
 	sphere2 = new OBJMesh();
 	if (!sphere2->LoadOBJMesh(MESHDIR "ico.obj")) {
@@ -260,6 +257,43 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	//glEnable(GL_BLEND);
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+}
+
+void Renderer::ChangeAmountOfLights()
+{
+	for (int x = 0; x < 6 + sphereFactor; x++)
+	{
+		for (int z = 0; z < 6 + sphereFactor; z++)
+		{
+			SceneNode* ico2 = new SceneNode(ico);
+			ico2->SetModelScale(Vector3(15.0f, 15.0f, 15.0f));
+			ico2->SetBoundingRadius(100000.0f);
+			ico2->SetTransform(Matrix4::Translation(Vector3((3500.0f/(sphereFactor+7))*(x)+500.0f, 150.0f, (3500.0f/(sphereFactor+7))*(z)+500.0f)));
+			root2->AddChild(ico2);
+		}
+	}
+
+	// Need to make an empty constructor for the Light class ...
+	pointLights = new Light[LIGHTNUM * LIGHTNUM];
+	for (int x = 0; x < LIGHTNUM; ++x) {
+		for (int z = 0; z < LIGHTNUM; ++z) {
+			Light & l = pointLights[(x * LIGHTNUM) + z];
+
+			float xPos = (RAW_WIDTH * HEIGHTMAP_X / (LIGHTNUM - 1)) * x;
+			float zPos = (RAW_HEIGHT * HEIGHTMAP_Z / (LIGHTNUM - 1)) * z;
+			l.SetPosition(Vector3(xPos, 100.0f, zPos));
+
+			float r = 0.5f + (float)(rand() % 129) / 128.0f;
+			float g = 0.5f + (float)(rand() % 129) / 128.0f;
+			float b = 0.5f + (float)(rand() % 129) / 128.0f;
+			l.SetColour(Vector4(r, g, b, 1.0f));
+
+			float radius = (RAW_WIDTH * HEIGHTMAP_X / LIGHTNUM);
+			l.SetRadius(radius);
+
+		}
+
+	}
 }
 
 Renderer ::~Renderer(void) {
@@ -343,16 +377,56 @@ void Renderer::UpdateScene(float msec) {
 		hellNode->PlayAnim(MESHDIR"idle2.md5anim");
 	}
 
-	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_RIGHT) && sceneNumber < 1)
+	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_RIGHT) && sceneNumber < 2)
 	{
 		sceneNumber += 1;
 		cout << "sceneNumber is: " << sceneNumber << endl;
+		if (sceneNumber == 0){ 
+			camera->SetPosition(Vector3(832.5f, 1934.0f, 3440.0f));
+			camera->SetYaw(320.0f);
+			camera->SetPitch(-40.2f);
+		}
+		else if (sceneNumber == 1)
+		{
+			camera->SetPosition(Vector3(2053.0f, 2718.0f, 5847.0f));
+			camera->SetYaw(0.91f);
+			camera->SetPitch(-32.69f);
+		}
+		else camera->SetPosition(Vector3((RAW_WIDTH * HEIGHTMAP_X / 2.0f) - 500.0f, 750.0f, (RAW_WIDTH * HEIGHTMAP_X / 2.0f) + 500.0f));
 	}
 
 	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_LEFT) && sceneNumber > 0)
 	{
 		sceneNumber -= 1;
 		cout << "sceneNumber is: " << sceneNumber << endl;
+		if (sceneNumber == 0) {
+			camera->SetPosition(Vector3(832.5f, 1349.0f, 3440.0f));
+			camera->SetYaw(318.5f);
+			camera->SetPitch(-24.2f);
+		}
+		else if (sceneNumber == 1)
+		{
+			camera->SetPosition(Vector3(2053.0f, 2718.0f, 5847.0f));
+			camera->SetYaw(0.91f);
+			camera->SetPitch(-32.69f);
+		}
+		else camera->SetPosition(Vector3((RAW_WIDTH * HEIGHTMAP_X / 2.0f) - 500.0f, 750.0f, (RAW_WIDTH * HEIGHTMAP_X / 2.0f) + 500.0f));
+	}
+
+	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_ADD) && sceneNumber == 1)
+	{
+		sphereFactor += 1;
+		cout << "sphereFactor is: " << sphereFactor << endl;
+		root2->ClearChildren();
+		ChangeAmountOfLights();
+	}
+
+	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_SUBTRACT) && sceneNumber == 1)
+	{
+		if (sphereFactor > 0) sphereFactor -= 1;
+		cout << "sphereFactor is: " << sphereFactor << endl;
+		root2->ClearChildren();
+		ChangeAmountOfLights();
 	}
 	
 	if (sceneNumber == 0)
@@ -370,10 +444,13 @@ void Renderer::UpdateScene(float msec) {
 		root2->Update(msec);
 		rotation = msec * 0.01f;
 	}
+	if (sceneNumber == 2)
+	{
+		waterRotate += msec / 1000.0f;
+	}
 	camera->UpdateCamera(msec);
 	viewMatrix = camera->BuildViewMatrix();
-	//frameFrustum.FromMatrix(projMatrix * viewMatrix);
-	
+	frameFrustum.FromMatrix(projMatrix * viewMatrix);	
 
 
 }
@@ -424,6 +501,24 @@ void Renderer::RenderScene() {
 		ClearNodeLists();
 		glDisable(GL_CULL_FACE);
 		glDisable(GL_BLEND);
+	}
+	else {
+		DrawSkybox();
+		//BuildNodeLists(root);
+		//SortNodeLists();
+
+		SetCurrentShader(nodeShader);
+		UpdateShaderMatrices();
+		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
+		glDepthMask(GL_FALSE);
+
+		//DrawNodes();
+		glDepthMask(GL_TRUE);
+
+		DrawShadowScene();
+		DrawCombinedScene();
+
+		//ClearNodeLists();
 	}
 	SwapBuffers();
 
@@ -501,6 +596,10 @@ void Renderer::DrawShadowScene() {
 	if (sceneNumber == 0)
 	{
 		DrawHellNode();
+		
+	}
+	if (sceneNumber == 0 || sceneNumber == 2)
+	{
 		DrawWater();
 	}
 	SetCurrentShader(sceneShader);
@@ -536,7 +635,7 @@ void Renderer::DrawCombinedScene() {
 		SetCurrentShader(sceneShader);
 	}
 	DrawHeightmap();
-	if (sceneNumber == 0) DrawWater();
+	if (sceneNumber == 0 || sceneNumber == 2) DrawWater();
 	SetCurrentShader(sceneShader);
 
 	glUseProgram(0);
