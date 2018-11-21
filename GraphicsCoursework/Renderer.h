@@ -13,6 +13,7 @@
 
 #define SHADOWSIZE 2048 // New !
 #define LIGHTNUM 8 // We ’ll generate LIGHTNUM squared lights ...
+#define POST_PASSES 10
 
 class Renderer : public OGLRenderer {
 public:
@@ -20,6 +21,8 @@ public:
 	virtual ~Renderer(void);
 
 	virtual void RenderScene();
+	void RenderSceneThree();
+	void RenderSceneTwo();
 	virtual void UpdateScene(float msec);
 
 protected:
@@ -37,6 +40,10 @@ protected:
 	void DrawCombinedScene();
 	void ChangeAmountOfLights();
 
+	void PresentScene();
+	void DrawPostProcess();
+	void DrawScene();
+
 	Shader* lightShader;
 	Shader* reflectShader;
 	Shader* skyboxShader;
@@ -44,6 +51,8 @@ protected:
 	Shader* sceneShader;
 	Shader* shadowShader;
 	Shader* nodeShader;
+	Shader* processShader;
+	Shader* sceneShader3;
 
 	void FillBuffers(); //G- Buffer Fill Render Pass
 	void DrawPointLights(); // Lighting Render Pass
@@ -61,7 +70,8 @@ protected:
 	float rotation; // How much to increase rotation by
 
 	GLuint bufferFBO; // FBO for our G- Buffer pass
-	GLuint bufferColourTex; // Albedo goes here
+	GLuint processFBO;
+	GLuint bufferColourTex[2]; // Albedo goes here
 	GLuint bufferNormalTex; // Normals go here
 	GLuint bufferDepthTex; // Depth goes here
 
@@ -73,8 +83,10 @@ protected:
 
 	OBJMesh* sphere;
 	OBJMesh* ico;
+	OBJMesh* cube;
 	SceneNode* root;
 	SceneNode* root2;
+	SceneNode* root3;
 	SceneNode* sun;
 
 	GLuint shadowTex;
@@ -86,6 +98,7 @@ protected:
 	HeightMap* heightMap;
 	Mesh* quad;
 	Mesh* quad2;
+	Mesh* quad3;
 	Mesh* floor;
 
 	Frustum frameFrustum;
