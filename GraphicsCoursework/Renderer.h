@@ -111,6 +111,7 @@ protected:
 	GLuint cubeMap;
 
 	float waterRotate;
+	float distance;
 
 	int sceneNumber = 0;
 	bool justChangedScene = false;

@@ -215,6 +215,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	hellData->AddAnim(MESHDIR"walk7.md5anim");
 	//hellData->AddAnim(MESHDIR"attack2.md5anim");
 	hellData->AddAnim(MESHDIR"idle2.md5anim");
+	hellData->AddAnim(MESHDIR"attack2.md5anim");
 
 	hellNode->PlayAnim(MESHDIR"idle2.md5anim");
 
@@ -532,6 +533,18 @@ Renderer ::~Renderer(void) {
 }
 
 void Renderer::UpdateScene(float msec) {
+	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_I))// && sceneNumber == 0)
+	{
+		hellNode->PlayAnim(MESHDIR"idle2.md5anim");
+	}
+	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_U))// && sceneNumber == 0)
+	{
+		hellNode->PlayAnim(MESHDIR"attack2.md5anim");
+	}
+	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_O))// && sceneNumber == 0)
+	{
+		hellNode->PlayAnim(MESHDIR"walk7.md5anim");
+	}
 	if (Window::GetKeyboard()->KeyDown(KEYBOARD_NUMPAD8))
 	{
 		Matrix4 newPosition = hellNode->GetTransform();
@@ -709,10 +722,7 @@ void Renderer::RenderScene() {
 		glDisable(GL_BLEND);
 	}
 	else {
-		//BuildNodeLists(root3);
-		//SortNodeLists();
-		//if (camera)
-		float distance = CalculateDistanceBetween(camera->GetPosition(), Vector3((RAW_WIDTH * HEIGHTMAP_X / 2.0f), 0.0f, (RAW_WIDTH * HEIGHTMAP_X / 2.0f)));
+		distance = CalculateDistanceBetween(camera->GetPosition(), Vector3((RAW_WIDTH * HEIGHTMAP_X / 2.0f), 0.0f, (RAW_WIDTH * HEIGHTMAP_X / 2.0f)));
 		//cout << "distance: " << distance << endl;
 
 		if (distance > 3900.0f)
