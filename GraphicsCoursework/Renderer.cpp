@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Renderer.h"
+#include <chrono>
 
 void Renderer::RenderSceneTwo()
 {
@@ -101,9 +102,11 @@ void Renderer::RenderSceneTwo()
 void Renderer::RenderSceneThree()
 {
 	quad3 = Mesh::GenerateQuad();
-	sceneShader3 = new Shader(SHADERDIR "TexturedVertex.glsl", SHADERDIR "TexturedFragment.glsl");
+	//sceneShader3 = new Shader(SHADERDIR "TexturedVertex.glsl", SHADERDIR "TexturedFragment.glsl");
+	
 	processShader = new Shader(SHADERDIR "TexturedVertex.glsl", SHADERDIR "ProcessFrag.glsl");
-	if (!sceneShader3->LinkProgram() || !processShader->LinkProgram())
+	//if (!sceneShader3->LinkProgram() || 
+	if (!processShader->LinkProgram())
 	{
 		return;
 	}
@@ -147,13 +150,22 @@ void Renderer::RenderSceneThree()
 Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 
 	camera = new Camera();
+	//Camera for first scene.
+	camera->SetPosition(Vector3(2008.5f, 1349.0f, 4516.0f));
+	camera->SetYaw(359.5f);
+	camera->SetPitch(-18.0f);
+	basicFont = new Font(SOIL_load_OGL_texture(TEXTUREDIR"tahoma.tga", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_COMPRESS_TO_DXT), 16, 16);
 	//light = new Light(Vector3(RAW_WIDTH * HEIGHTMAP_X / 2.0f, 200.0f, RAW_WIDTH * HEIGHTMAP_X / 2.0f), Vector4(1, 1, 1, 1), 5500.0f);
 	//light = new Light(Vector3(-2000, 5000.0f, 0), Vector4(1, 1, 1, 1), 55000.0f);
 	light = new Light(Vector3(RAW_WIDTH * HEIGHTMAP_X / 2.0f, 4000.0f, RAW_WIDTH * HEIGHTMAP_X / 2.0f), Vector4(1, 1, 1, 1), 55000.0f);
-	
+	light->SetColour(Vector4(1, 1, 1, 1));
+	light->SetRadius(55000.0f);
 	quad = Mesh::GenerateQuad();
-	
-	
+	screenQuads = new Mesh[2];
+	screenQuads[0] = *Mesh::GenerateScreenQuad(-1.0f, 1.0f, 1.0f, 0.0f);
+	screenQuads[1] = *Mesh::GenerateScreenQuad(-1.0f, -1.0f, 1.0f, 0.0f);
+	//screenQuads[2] = *Mesh::GenerateScreenQuad(-1.0f, 0.0f, 0.0f, 1.0f);
+	//screenQuads[3] = *Mesh::GenerateScreenQuad(0.0f, 0.0f, 1.0f, 1.0f);
 
 	sphere = new OBJMesh();
 
@@ -167,21 +179,17 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	//root->SetBoundingRadius(10000.0f);
 	
 	sun = new SceneNode(sphere);
-	sun->SetMesh(sphere);
+	//sun->SetMesh(sphere);
 	sun->SetTransform(Matrix4::Translation(Vector3(-10000.0f, 10000.0f, 0.0f)));
 	sun->SetModelScale(Vector3(50.0f, 50.0f, 50.0f));
 	sun->SetBoundingRadius(10000.0f);
 	
 	root->AddChild(sun);
 
-
 	//BuildNodeLists(root);
 
 	//camera->SetPosition(Vector3(RAW_WIDTH * HEIGHTMAP_X / 2.0f, 550.0f, RAW_WIDTH * HEIGHTMAP_X / 2.0f));
-	//Camera for first scene.
-	camera->SetPosition(Vector3(832.5f, 1349.0f, 3440.0f));
-	camera->SetYaw(318.5f);
-	camera->SetPitch(-24.2f);
+
 
 
 	hellData = new MD5FileData(MESHDIR"hellknight.md5mesh");
@@ -206,14 +214,14 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	
 	sceneShader = new Shader(SHADERDIR "ShadowSceneVertex.glsl", SHADERDIR "ShadowSceneFragment.glsl");
 	shadowShader = new Shader(SHADERDIR "ShadowVertex.glsl", SHADERDIR "ShadowFragment.glsl");
-	
+	sceneShader3 = new Shader(SHADERDIR "TexturedVertex.glsl", SHADERDIR "TexturedFragment.glsl");
+	textShader = new Shader(SHADERDIR "TexturedVertex.glsl", SHADERDIR "DeferredTextFragment.glsl");
 
-	if (!nodeShader->LinkProgram() || !sceneShader->LinkProgram() || !shadowShader->LinkProgram() || !reflectShader->LinkProgram() || !lightShader->LinkProgram() || !skyboxShader->LinkProgram() || !hellNodeShader->LinkProgram()) {
+	if (!textShader->LinkProgram() || !sceneShader3->LinkProgram() || !nodeShader->LinkProgram() || !sceneShader->LinkProgram() || !shadowShader->LinkProgram() || !reflectShader->LinkProgram() || !lightShader->LinkProgram() || !skyboxShader->LinkProgram() || !hellNodeShader->LinkProgram()) {
 		return;
 	}
 
 	hellData->AddAnim(MESHDIR"walk7.md5anim");
-	//hellData->AddAnim(MESHDIR"attack2.md5anim");
 	hellData->AddAnim(MESHDIR"idle2.md5anim");
 	hellData->AddAnim(MESHDIR"attack2.md5anim");
 
@@ -243,9 +251,9 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	cubeMaps.push_back(cubeMap);
 
 	cubeMap = SOIL_load_OGL_cubemap(
-		TEXTUREDIR "sor_sea/sea_ft.jpg", TEXTUREDIR "sor_sea/sea_bk.jpg",
-		TEXTUREDIR "sor_sea/sea_up.jpg", TEXTUREDIR "sor_sea/sea_dn.jpg",
-		TEXTUREDIR "sor_sea/sea_rt.jpg", TEXTUREDIR "sor_sea/sea_lf.jpg",
+		TEXTUREDIR "ame_nebula/purplenebula_ft.tga", TEXTUREDIR "ame_nebula/purplenebula_bk.tga",
+		TEXTUREDIR "ame_nebula/purplenebula_up.tga", TEXTUREDIR "ame_nebula/purplenebula_dn.tga",
+		TEXTUREDIR "ame_nebula/purplenebula_rt.tga", TEXTUREDIR "ame_nebula/purplenebula_lf.tga",
 		SOIL_LOAD_RGB,
 		SOIL_CREATE_NEW_ID, 0
 	);
@@ -450,26 +458,28 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 
 void Renderer::ChangeAmountOfLights()
 {
-	for (int x = 0; x < 6 + sphereFactor; x++)
+	for (int x = 0; x < 11; x++) //+ sphereFactor; x++)
 	{
-		for (int z = 0; z < 6 + sphereFactor; z++)
+		for (int z = 0; z < 11; z++)
 		{
 			SceneNode* ico2 = new SceneNode(ico);
 			ico2->SetModelScale(Vector3(15.0f, 15.0f, 15.0f));
 			ico2->SetBoundingRadius(100000.0f);
-			ico2->SetTransform(Matrix4::Translation(Vector3((3500.0f/(sphereFactor+7))*(x)+500.0f, 150.0f, (3500.0f/(sphereFactor+7))*(z)+500.0f)));
+			ico2->SetTransform(Matrix4::Translation(Vector3((3500.0f/(12))*(x)+500.0f, 150.0f, (3500.0f/(12))*(z)+500.0f)));
 			root2->AddChild(ico2);
 		}
 	}
 
 	// Need to make an empty constructor for the Light class ...
+	sphereFactor;
 	pointLights = new Light[LIGHTNUM * LIGHTNUM];
 	for (int x = 0; x < LIGHTNUM; ++x) {
 		for (int z = 0; z < LIGHTNUM; ++z) {
-			Light & l = pointLights[(x * LIGHTNUM) + z];
+			Light & l = pointLights[x * (LIGHTNUM)+z];
 
-			float xPos = (RAW_WIDTH * HEIGHTMAP_X / (LIGHTNUM - 1)) * x;
-			float zPos = (RAW_HEIGHT * HEIGHTMAP_Z / (LIGHTNUM - 1)) * z;
+			float xPos = (RAW_WIDTH * HEIGHTMAP_X / ((LIGHTNUM - 1)) * x);
+			float zPos = (RAW_HEIGHT * HEIGHTMAP_Z / ((LIGHTNUM - 1)) * z);
+
 			l.SetPosition(Vector3(xPos, 100.0f, zPos));
 
 			float r = 0.5f + (float)(rand() % 129) / 128.0f;
@@ -477,7 +487,7 @@ void Renderer::ChangeAmountOfLights()
 			float b = 0.5f + (float)(rand() % 129) / 128.0f;
 			l.SetColour(Vector4(r, g, b, 1.0f));
 
-			float radius = (RAW_WIDTH * HEIGHTMAP_X / LIGHTNUM);
+			float radius = (RAW_WIDTH * HEIGHTMAP_X / (LIGHTNUM));
 			l.SetRadius(radius);
 
 		}
@@ -528,11 +538,14 @@ Renderer ::~Renderer(void) {
 	glDeleteFramebuffers(1, &processFBO);
 	glDeleteFramebuffers(1, &pointLightFBO);
 	
-
 	currentShader = NULL;
 }
 
 void Renderer::UpdateScene(float msec) {
+	//cout << msec << endl;
+	FPS = (int)(1 / (msec/1000));
+	CountCycle();
+	
 	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_I))// && sceneNumber == 0)
 	{
 		hellNode->PlayAnim(MESHDIR"idle2.md5anim");
@@ -581,27 +594,37 @@ void Renderer::UpdateScene(float msec) {
 		hellNode->PlayAnim(MESHDIR"idle2.md5anim");
 	}
 
-	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_RIGHT) && sceneNumber < 2)
+	if ((Window::GetKeyboard()->KeyTriggered(KEYBOARD_RIGHT) && sceneNumber < 2))
 	{
 		sceneNumber += 1;
 		cout << "sceneNumber is: " << sceneNumber << endl;
 		if (sceneNumber == 0){ 
-			camera->SetPosition(Vector3(832.5f, 1934.0f, 3440.0f));
-			camera->SetYaw(320.0f);
-			camera->SetPitch(-40.2f);
+			camera->SetPosition(Vector3(2008.5f, 1349.0f, 4516.0f));
+			camera->SetYaw(359.5f);
+			camera->SetPitch(-18.0f);
 		}
 		else if (sceneNumber == 1)
 		{
-			camera->SetPosition(Vector3(2053.0f, 2718.0f, 5847.0f));
-			camera->SetYaw(0.91f);
-			camera->SetPitch(-32.69f);
+			camera->SetPosition(Vector3(7209.0f, 2718.0f, 2118.0f));
+			camera->SetYaw(88.34f);
+			camera->SetPitch(-19.32f);
 			RenderSceneTwo();
 		}
 		else {
 			RenderSceneThree();
-			camera->SetPosition(Vector3(-1640.0f, 707.0f, -1915.76f));
-			camera->SetYaw(222.5f);
-			camera->SetPitch(-23.7f);
+			camera->SetPosition(Vector3(1877.0f, 707.0f, 8220.76f));
+			camera->SetYaw(358.5f);
+			camera->SetPitch(-10.7f);
+		}
+	}
+
+	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_M))
+	{
+		splitScreen = !splitScreen;
+		if (splitScreen)
+		{
+			RenderSceneTwo();
+			RenderSceneThree();
 		}
 	}
 
@@ -610,37 +633,45 @@ void Renderer::UpdateScene(float msec) {
 		sceneNumber -= 1;
 		cout << "sceneNumber is: " << sceneNumber << endl;
 		if (sceneNumber == 0) {
-			camera->SetPosition(Vector3(832.5f, 1349.0f, 3440.0f));
-			camera->SetYaw(318.5f);
-			camera->SetPitch(-24.2f);
+			light->SetColour(Vector4(1, 1, 1, 1));
+			light->SetRadius(55000.0f);
+			camera->SetPosition(Vector3(2008.5f, 1349.0f, 4516.0f));
+			camera->SetYaw(359.5f);
+			camera->SetPitch(-18.0f);
 		}
 		else if (sceneNumber == 1)
 		{
-			camera->SetPosition(Vector3(2053.0f, 2718.0f, 5847.0f));
-			camera->SetYaw(0.91f);
-			camera->SetPitch(-32.69f);
+			camera->SetPosition(Vector3(7209.0f, 2718.0f, 2118.0f));
+			camera->SetYaw(88.34f);
+			camera->SetPitch(-19.32f);
 			RenderSceneTwo();
 		}
 		else {
-			camera->SetPosition(Vector3(-1640.0f, 707.0f, -1915.76f));
-			camera->SetYaw(222.5f);
-			camera->SetPitch(-23.7f);
+			camera->SetPosition(Vector3(1877.0f, 707.0f, 8220.76f));
+			camera->SetYaw(358.5f);
+			camera->SetPitch(-10.7f);
 			RenderSceneThree();
 		}
 	}
 
+	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_BACK))
+	{
+		PauseCycle();
+	}
+
+
 	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_ADD) && sceneNumber == 1)
 	{
-		sphereFactor += 1;
-		cout << "sphereFactor is: " << sphereFactor << endl;
+		LIGHTNUM += 1;
+		cout << "LIGHTNUM is: " << LIGHTNUM << endl;
 		root2->ClearChildren();
 		ChangeAmountOfLights();
 	}
 
 	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_SUBTRACT) && sceneNumber == 1)
 	{
-		if (sphereFactor > 0) sphereFactor -= 1;
-		cout << "sphereFactor is: " << sphereFactor << endl;
+		if (LIGHTNUM > 0) LIGHTNUM -= 1;
+		cout << "LIGHTNUM is: " << LIGHTNUM << endl;
 		root2->ClearChildren();
 		ChangeAmountOfLights();
 	}
@@ -648,9 +679,11 @@ void Renderer::UpdateScene(float msec) {
 	if (sceneNumber == 0)
 	{
 		hellNode->Update(msec);
-		sun->SetTransform(root->GetWorldTransform() * Matrix4::Rotation(msec/100.0f, Vector3(0, 1, 0)) * sun->GetTransform());
+		sun->SetTransform(root->GetWorldTransform() * Matrix4::Rotation(-msec/100.0f, Vector3(0, 0, 1)) * sun->GetTransform());
 		
-		light = new Light(Vector3(sun->GetWorldTransform().GetPositionVector().x, 4000.0f, sun->GetWorldTransform().GetPositionVector().z), Vector4(1, 1, 1, 1), 55000.0f);
+		//light = new Light(Vector3(sun->GetWorldTransform().GetPositionVector().x, 4000.0f, sun->GetWorldTransform().GetPositionVector().z), Vector4(1, 1, 1, 1), 55000.0f);
+		light->SetPosition(sun->GetWorldTransform().GetPositionVector());
+		
 		root->Update(msec);
 		waterRotate += msec / 1000.0f;
 
@@ -674,9 +707,40 @@ void Renderer::UpdateScene(float msec) {
 
 }
 
+void Renderer::UpdateRendererForNewScene()
+{
+	if (sceneNumber == 0) {
+		light->SetColour(Vector4(1, 1, 1, 1));
+		light->SetRadius(55000.0f);
+		camera->SetPosition(Vector3(2008.5f, 1349.0f, 4516.0f));
+		camera->SetYaw(359.5f);
+		camera->SetPitch(-18.0f);
+	}
+	else if (sceneNumber == 1)
+	{
+		camera->SetPosition(Vector3(7209.0f, 2718.0f, 2118.0f));
+		camera->SetYaw(88.34f);
+		camera->SetPitch(-19.32f);
+		RenderSceneTwo();
+	}
+	else {
+		camera->SetPosition(Vector3(1877.0f, 707.0f, 8220.76f));
+		camera->SetYaw(358.5f);
+		camera->SetPitch(-10.7f);
+		RenderSceneThree();
+	}
+}
+
 void Renderer::RenderScene() {
+
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	projMatrix = Matrix4::Perspective(1.0f, 150000000.0f, (float)width / (float)height, 45.0f);
+
+	/*if (splitScreen)
+	{
+		RenderSceneTwo();
+		RenderSceneThree();
+	}*/
 
 	if (sceneNumber == 0)
 	{
@@ -727,15 +791,12 @@ void Renderer::RenderScene() {
 
 		if (distance > 3900.0f)
 		{
-			glDepthMask(GL_FALSE);
-			DrawSkybox();
-			DrawWater();
-			glDepthMask(GL_TRUE);
-
 			DrawScene();
 			DrawPostProcess();
 			PresentScene();
-
+			glDisable(GL_DEPTH_TEST);
+			DrawSceneText();
+			glEnable(GL_DEPTH_TEST);
 		}
 		else
 		{
@@ -743,12 +804,35 @@ void Renderer::RenderScene() {
 			DrawShadowScene();
 			DrawCombinedScene();
 		}
-		//projMatrix = Matrix4::Perspective(1.0f, 150000000.0f, (float)width / (float)height, 45.0f);
-		//UpdateShaderMatrices();
-		//ClearNodeLists();
 	}
+
 	SwapBuffers();
 
+}
+
+void Renderer::DrawSceneText()
+{
+	glEnable(GL_BLEND);
+	SetCurrentShader(textShader);
+	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
+	DrawText2("FPS: " + to_string(FPS), Vector3(0, 0, 0), 0, 24.0f);
+	if (sceneNumber == 0)
+	{
+		DrawText2("Shadow mapping: Sun moves around heightmap on Z-axis.", Vector3(-1500.0f, 1000, -1000), 0, 128.0f, true);
+		DrawText2("Hell Knight's shadow updates.", Vector3(-1500.0f, 872.0f, -1000), 0, 128.0f, true);
+	}
+	else if (sceneNumber == 1)
+	{
+		Vector3 textPosition = Vector3(0, 0, 0);
+		int amountOfLights = (LIGHTNUM) * (LIGHTNUM);
+		DrawText2("Amount of lights: " + to_string(amountOfLights), Vector3(-4000, 750, -1000), 90, 200.0f, true);
+	}
+	else
+	{
+		DrawText2("The island is a bit blurry. Move closer.", Vector3(500, 1000, 4750), 0, 80.0f, true);
+	}
+	glDisable(GL_BLEND);
+	glUseProgram(0);
 
 }
 
@@ -827,7 +911,6 @@ void Renderer::DrawShadowScene() {
 	shadowMatrix = biasMatrix * (projMatrix * viewMatrix);
 
 	UpdateShaderMatrices();
-
 	DrawHeightmap();
 
 	if (sceneNumber == 2)
@@ -846,10 +929,7 @@ void Renderer::DrawShadowScene() {
 		DrawHellNode();
 		
 	}
-	if (sceneNumber == 0 || sceneNumber == 2)
-	{
-		DrawWater();
-	}
+
 	
 	SetCurrentShader(sceneShader);
 
@@ -894,7 +974,11 @@ void Renderer::DrawCombinedScene() {
 		DrawNodes();
 		//glDepthMask(GL_TRUE);
 	}
-	if (sceneNumber == 0 || sceneNumber == 2) DrawWater();
+	if (sceneNumber == 0 || sceneNumber == 2)
+	{
+		DrawSceneText();
+		DrawWater();
+	}
 	SetCurrentShader(sceneShader);
 
 	glUseProgram(0);
@@ -1006,7 +1090,7 @@ void Renderer::FillBuffers() {
 	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 	DrawSkybox();
-
+	DrawSceneText();
 	SetCurrentShader(sceneShader2);
 	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
 	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "bumpTex"), 1);
@@ -1017,6 +1101,8 @@ void Renderer::FillBuffers() {
 
 	heightMaps[1]->Draw();
 	DrawNodes();
+	//SetCurrentShader(sceneShader2);
+	//DrawSceneText();
 
 	glUseProgram(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1032,6 +1118,7 @@ void Renderer::DrawPointLights() {
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glBlendFunc(GL_ONE, GL_ONE);
+	glEnable(GL_BLEND);
 
 	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "depthTex"), 3);
 	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "normTex"), 4);
@@ -1085,7 +1172,8 @@ void Renderer::DrawPointLights() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glClearColor(0.2f, 0.2f, 0.2f, 1);
-
+	
+	glDisable(GL_BLEND);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glUseProgram(0);
 
@@ -1119,8 +1207,14 @@ void Renderer::CombineBuffers() {
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, bufferNormalTex);
 
-	quad2->Draw();
-
+	if (splitScreen)
+	{
+		screenQuads[0].Draw();
+	}
+	else
+	{
+		quad2->Draw();
+	}
 	glUseProgram(0);
 
 }
@@ -1128,7 +1222,6 @@ void Renderer::CombineBuffers() {
 void Renderer::DrawScene() {
 	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	
 	
 	SetCurrentShader(sceneShader3);
 	projMatrix = Matrix4::Perspective(1.0f, 150000000.0f, (float)width / (float)height, 45.0f);
@@ -1170,17 +1263,6 @@ void Renderer::DrawPostProcess() {
 
 		quad3->SetTexture(bufferColourTex[1]);
 		quad3->Draw();
-		/*for (int j = 0; j < (int)nodeList.size(); j++)
-		{
-			nodeList[j]->GetMesh()->SetTexture(bufferColourTex[0]);
-			nodeList[j]->GetMesh()->Draw();// quad->Draw();
-			// Now to swap the colour buffers , and do the second blur pass
-			glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "isVertical"), 1);
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, bufferColourTex[0], 0);
-
-			nodeList[j]->GetMesh()->SetTexture(bufferColourTex[1]);
-			nodeList[j]->GetMesh()->Draw();// quad->Draw();
-		}*/
 
 		
 	}
@@ -1194,32 +1276,77 @@ void Renderer::DrawPostProcess() {
 void Renderer::PresentScene() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	//glClear(GL_STENCIL_BUFFER_BIT);
 	
-	
-	//DrawWater();
 	SetCurrentShader(sceneShader3);
 	
-
 	projMatrix = Matrix4::Orthographic(-1, 1, 1, -1, -1, 1);
 	viewMatrix.ToIdentity();
 	UpdateShaderMatrices();
-	//DrawSkybox();
-	//SetCurrentShader(sceneShader3);
-	//for (int i = 0; i < (int)nodeList.size(); i++)
-	//{
-		//nodeList[i]->GetMesh()->SetTexture(bufferColourTex[0]);
-		//nodeList[i]->GetMesh()->Draw();
-	//}
-	//glEnable(GL_DEPTH_TEST);
-	quad3->SetTexture(bufferColourTex[0]);
-	quad3->Draw();
-	//glDisable(GL_DEPTH_TEST);
-	//projMatrix = Matrix4::Perspective(1.0f, 150000000.0f, (float)width / (float)height, 45.0f);
-	//viewMatrix = camera->BuildViewMatrix();
-	//UpdateShaderMatrices();
-	//DrawSkybox();
+
+	if (splitScreen)
+	{
+		screenQuads[1].SetTexture(bufferColourTex[0]);
+		screenQuads[1].Draw();
+
+		glEnable(GL_CULL_FACE);
+		glEnable(GL_BLEND);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		BuildNodeLists(root2);
+		SortNodeLists();
+
+		SetCurrentShader(nodeShader);
+		UpdateShaderMatrices();
+		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
+		//glDepthMask(GL_FALSE);
+
+		//glDepthMask(GL_TRUE);
+
+		FillBuffers();
+		DrawPointLights();
+		CombineBuffers();
+
+		ClearNodeLists();
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_BLEND);
+
+	}
+	else
+	{
+		quad3->SetTexture(bufferColourTex[0]);
+		quad3->Draw();
+	}
+
 
 	
+	
 	glUseProgram(0);
+}
+
+void Renderer::DrawText2(const std::string &text, const Vector3 &position, const float rotation, const float size, const bool perspective) {
+	//Create a new temporary TextMesh, using our line of text and our font
+	TextMesh* mesh = new TextMesh(text, *basicFont);
+
+	//This just does simple matrix setup to render in either perspective or
+	//orthographic mode, there's nothing here that's particularly tricky.
+	if (perspective) {
+		if (rotation == 0) modelMatrix = Matrix4::Translation(position) * Matrix4::Scale(Vector3(size, size, 1));
+		else modelMatrix = Matrix4::Rotation(rotation, Vector3(0, 1, 0)) * Matrix4::Translation(position) * Matrix4::Scale(Vector3(size, size, 1));
+		viewMatrix = camera->BuildViewMatrix();
+		//projMatrix = Matrix4::Perspective(1.0f, 10000.0f, (float)width / (float)height, 45.0f);
+		projMatrix = Matrix4::Perspective(1.0f, 150000000.0f, (float)width / (float)height, 45.0f);
+	}
+	else {
+		//In ortho mode, we subtract the y from the height, so that a height of 0
+		//is at the top left of the screen, which is more intuitive
+		//(for me anyway...)
+		modelMatrix = Matrix4::Translation(Vector3(position.x, height - position.y, position.z)) * Matrix4::Scale(Vector3(size, size, 1));
+		viewMatrix.ToIdentity();
+		projMatrix = Matrix4::Orthographic(-1.0f, 1.0f, (float)width, 0.0f, (float)height, 0.0f);
+	}
+	//Either way, we update the matrices, and draw the mesh
+	UpdateShaderMatrices();
+	mesh->Draw();
+
+	delete mesh; //Once it's drawn, we don't need it anymore!
 }
