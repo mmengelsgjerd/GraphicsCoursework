@@ -162,8 +162,8 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 	light->SetRadius(55000.0f);
 	quad = Mesh::GenerateQuad();
 	screenQuads = new Mesh[2];
-	screenQuads[0] = *Mesh::GenerateScreenQuad(-1.0f, 1.0f, 1.0f, 0.0f);
-	screenQuads[1] = *Mesh::GenerateScreenQuad(-1.0f, -1.0f, 1.0f, 0.0f);
+	screenQuads[0] = *Mesh::GenerateScreenQuad(-1.0f, -1.0f, 1.0f, 0.0f);
+	screenQuads[1] = *Mesh::GenerateScreenQuad(-1.0f, 0.0f, 1.0f, 1.0f);
 	//screenQuads[2] = *Mesh::GenerateScreenQuad(-1.0f, 0.0f, 0.0f, 1.0f);
 	//screenQuads[3] = *Mesh::GenerateScreenQuad(0.0f, 0.0f, 1.0f, 1.0f);
 
@@ -621,11 +621,11 @@ void Renderer::UpdateScene(float msec) {
 	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_M))
 	{
 		splitScreen = !splitScreen;
-		if (splitScreen)
+		/*if (splitScreen)
 		{
 			RenderSceneTwo();
 			RenderSceneThree();
-		}
+		}*/
 	}
 
 	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_LEFT) && sceneNumber > 0)
@@ -688,7 +688,7 @@ void Renderer::UpdateScene(float msec) {
 		waterRotate += msec / 1000.0f;
 
 	}
-	if (sceneNumber == 1)
+	if (sceneNumber == 1 )//|| (sceneNumber == 2 && splitScreen))
 	{
 		//RenderSceneTwo();
 		root2->Update(msec);
@@ -936,6 +936,7 @@ void Renderer::DrawShadowScene() {
 
 	glUseProgram(0);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
 	glViewport(0, 0, width, height);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1008,6 +1009,7 @@ void Renderer::DrawSkybox() {
 	glActiveTexture(GL_TEXTURE2);
 	glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "cubeTex"), 2);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMaps[sceneNumber]);
+
 
 	quad->Draw();
 
@@ -1101,6 +1103,7 @@ void Renderer::FillBuffers() {
 
 	heightMaps[1]->Draw();
 	DrawNodes();
+
 	//SetCurrentShader(sceneShader2);
 	//DrawSceneText();
 
@@ -1167,8 +1170,7 @@ void Renderer::DrawPointLights() {
 		}
 
 	}
-
-	glCullFace(GL_BACK);
+	if (!splitScreen) glCullFace(GL_BACK);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	glClearColor(0.2f, 0.2f, 0.2f, 1);
@@ -1209,7 +1211,14 @@ void Renderer::CombineBuffers() {
 
 	if (splitScreen)
 	{
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_BLEND);
+		glDisable(GL_DEPTH_TEST);
 		screenQuads[0].Draw();
+		screenQuads[1].Draw();
+		glEnable(GL_CULL_FACE);
+		glEnable(GL_BLEND);
+		glEnable(GL_DEPTH_TEST);
 	}
 	else
 	{
@@ -1285,30 +1294,20 @@ void Renderer::PresentScene() {
 
 	if (splitScreen)
 	{
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_BLEND);
+		glDisable(GL_DEPTH_TEST);
+		screenQuads[0].SetTexture(bufferColourTex[0]);
+		screenQuads[0].Draw();
 		screenQuads[1].SetTexture(bufferColourTex[0]);
 		screenQuads[1].Draw();
 
 		glEnable(GL_CULL_FACE);
 		glEnable(GL_BLEND);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glEnable(GL_DEPTH_TEST);
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		BuildNodeLists(root2);
-		SortNodeLists();
-
-		SetCurrentShader(nodeShader);
-		UpdateShaderMatrices();
-		glUniform1i(glGetUniformLocation(currentShader->GetProgram(), "diffuseTex"), 0);
-		//glDepthMask(GL_FALSE);
-
-		//glDepthMask(GL_TRUE);
-
-		FillBuffers();
-		DrawPointLights();
-		CombineBuffers();
-
-		ClearNodeLists();
-		glDisable(GL_CULL_FACE);
-		glDisable(GL_BLEND);
+		
 
 	}
 	else
