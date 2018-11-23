@@ -77,6 +77,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>..\GLEW\include;..\SOIL;..\nclgl;$(IncludePath);C:\Users\b7067634\Projects\GraphicsCoursework\SOIL;C:\Users\b7067634\Projects\GraphicsCoursework\GLEW\include\GL;</IncludePath>
+    <LibraryPath>..\..\GLEW\lib\$(Configuration);..\..\SOIL\$(Configuration)\;..\$(Configuration)\;$(LibraryPath);C:\Users\b7067634\Projects\GraphicsCoursework\SOIL;C:\Users\b7067634\Projects\GraphicsCoursework\GLEW\include\GL;C:\Users\b7067634\Projects\GraphicsCoursework\GLEW\lib\Debug;C:\Users\b7067634\Projects\GraphicsCoursework\SOIL\Debug;</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -101,7 +103,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
