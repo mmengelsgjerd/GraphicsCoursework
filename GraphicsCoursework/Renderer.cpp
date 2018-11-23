@@ -594,9 +594,11 @@ void Renderer::UpdateScene(float msec) {
 		hellNode->PlayAnim(MESHDIR"idle2.md5anim");
 	}
 
-	if ((Window::GetKeyboard()->KeyTriggered(KEYBOARD_RIGHT) && sceneNumber < 2))
+	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_RIGHT))
 	{
 		sceneNumber += 1;
+		if (sceneNumber == 3) sceneNumber = 0;
+	
 		cout << "sceneNumber is: " << sceneNumber << endl;
 		if (sceneNumber == 0){ 
 			camera->SetPosition(Vector3(2008.5f, 1349.0f, 4516.0f));
@@ -628,9 +630,10 @@ void Renderer::UpdateScene(float msec) {
 		}*/
 	}
 
-	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_LEFT) && sceneNumber > 0)
+	if (Window::GetKeyboard()->KeyTriggered(KEYBOARD_LEFT))
 	{
 		sceneNumber -= 1;
+		if (sceneNumber == -1) sceneNumber = 2;
 		cout << "sceneNumber is: " << sceneNumber << endl;
 		if (sceneNumber == 0) {
 			light->SetColour(Vector4(1, 1, 1, 1));

@@ -43,8 +43,8 @@ void Camera::UpdateCamera(float msec)	{
 	if(Window::GetKeyboard()->KeyDown(KEYBOARD_SPACE)) {
 		position.y -= msec/10.0f;
 	}
-	cout << position.x << ", " << position.y << ", " << position.z << endl;
-	cout << "yaw: " << yaw << ", pitch: " << pitch << endl;
+	//cout << position.x << ", " << position.y << ", " << position.z << endl;
+	//cout << "yaw: " << yaw << ", pitch: " << pitch << endl;
 }
 
 /*
