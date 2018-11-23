@@ -38,28 +38,6 @@ void Renderer::RenderSceneTwo()
 
 	glGenFramebuffers(1, &bufferFBO);
 	glGenFramebuffers(1, &pointLightFBO);
-	//glGenFramebuffers(1, &processFBO); // And do post processing in this
-
-	// Generate our scene depth texture ...
-	/*glGenTextures(1, &bufferDepthTex);
-	glBindTexture(GL_TEXTURE_2D, bufferDepthTex);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
-
-	// And our colour texture ...
-	for (int i = 0; i < 2; ++i) {
-		glGenTextures(1, &bufferColourTex[i]);
-		glBindTexture(GL_TEXTURE_2D, bufferColourTex[i]);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	}*/
-
 
 
 	GLenum buffers[2];
@@ -326,98 +304,7 @@ Renderer::Renderer(Window& parent) : OGLRenderer(parent) {
 		return;
 	}
 
-/*
-	root2 = new SceneNode();
-	ico = new OBJMesh();
 
-	if (!ico->LoadOBJMesh(SUNDIR "sphere.obj")) return;
-	ico->SetTexture(SOIL_load_OGL_texture(TEXTUREDIR "whiteTex.jpg", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
-	//ico->SetBumpMap(SOIL_load_OGL_texture(TEXTUREDIR "Barren RedsDOT3.JPG", SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS));
-	SetTextureRepeating(ico->GetTexture(), true);
-	//SetTextureRepeating(ico->GetBumpMap(), true);
-
-
-	// Need to make an empty constructor for the Light class ...
-	ChangeAmountOfLights();
-
-	sphere2 = new OBJMesh();
-	if (!sphere2->LoadOBJMesh(MESHDIR "ico.obj")) {
-		return;
-	}
-
-	sceneShader2 = new Shader(SHADERDIR "BumpVertex.glsl", SHADERDIR "BufferFragment.glsl");
-	if (!sceneShader2->LinkProgram()) { return; }
-
-	combineShader = new Shader(SHADERDIR "CombineVertex.glsl", SHADERDIR "CombineFragment.glsl");
-	if (!combineShader->LinkProgram()) {
-		return;
-	}
-
-	pointlightShader = new Shader(SHADERDIR "PointLightVertex.glsl", SHADERDIR "PointLightFragment.glsl");
-	if (!pointlightShader->LinkProgram()) {
-		return;
-	}
-
-	glGenFramebuffers(1, &bufferFBO);
-	glGenFramebuffers(1, &pointLightFBO);
-	//glGenFramebuffers(1, &processFBO); // And do post processing in this
-
-	// Generate our scene depth texture ...
-	/*glGenTextures(1, &bufferDepthTex);
-	glBindTexture(GL_TEXTURE_2D, bufferDepthTex);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL);
-
-	// And our colour texture ...
-	for (int i = 0; i < 2; ++i) {
-		glGenTextures(1, &bufferColourTex[i]);
-		glBindTexture(GL_TEXTURE_2D, bufferColourTex[i]);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	}
-
-
-
-	GLenum buffers[2];
-	buffers[0] = GL_COLOR_ATTACHMENT0;
-	buffers[1] = GL_COLOR_ATTACHMENT1;
-
-	// Generate our scene depth texture ...
-	GenerateScreenTexture(bufferDepthTex, true);
-	GenerateScreenTexture(bufferColourTex[0]);
-	GenerateScreenTexture(bufferNormalTex);
-	GenerateScreenTexture(lightEmissiveTex);
-	GenerateScreenTexture(lightSpecularTex);
-
-	// And now attach them to our FBOs
-	glBindFramebuffer(GL_FRAMEBUFFER, bufferFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, bufferColourTex[0], 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, bufferNormalTex, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, bufferDepthTex, 0);
-	glDrawBuffers(2, buffers);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		return;
-
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, pointLightFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lightEmissiveTex, 0);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, lightSpecularTex, 0);
-	glDrawBuffers(2, buffers);
-
-	/*if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		return;
-	}
-	if (!bufferDepthTex || !bufferColourTex[0]) {
-		return;
-	}*/
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glEnable(GL_DEPTH_TEST);
 
